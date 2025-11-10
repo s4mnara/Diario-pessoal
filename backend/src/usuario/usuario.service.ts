@@ -49,6 +49,11 @@ findAll(): Promise<Usuario[]>{
        }
    }
 
+   async findByEmail(email: string): Promise<Usuario | null> {
+  return this.usuariosRpository.findOne({ where: { email } });
+}
+
+
 
 }
 
