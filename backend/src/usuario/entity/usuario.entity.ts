@@ -14,7 +14,8 @@ export class Usuario {
   @Column()
   senha: string;
 
-  @Column('int')
-  idade: number;
+ @Column({ nullable: true })
+ idade?: number;
+
 }
 
