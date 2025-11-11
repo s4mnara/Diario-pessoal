@@ -29,16 +29,23 @@ export class AuthService {
     return { message: 'Usuário registrado com sucesso', usuario };
   }
 
-  async login(loginDto: LoginDto) {
-    const usuario = await this.usuarioService.findByEmail(loginDto.email);
-    if (!usuario) throw new UnauthorizedException('E-mail ou senha inválidos.');
+  async validateUser(email: string, senha: string) {
+    const usuario = await this.usuarioService.findByEmail(email);
+    if (!usuario) return null;
 
-    const isPasswordValid = await bcrypt.compare(loginDto.senha, usuario.senha);
-    if (!isPasswordValid) throw new UnauthorizedException('E-mail ou senha inválidos.');
+    const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
+    if (!isPasswordValid) return null;
 
-    const payload = { sub: usuario.id, email: usuario.email };
-    const token = this.jwtService.sign(payload);
+    return usuario;
+  }
 
-    return { access_token: token };
+  async generateToken(usuario: any) {
+    const payload = { 
+      sub: usuario.id, 
+      email: usuario.email, 
+      nome: usuario.nome 
+    };
+    return { access_token: this.jwtService.sign(payload) };
   }
 }
+
