@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; 
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   BookOpen,
   MessageSquare,
   Settings,
   LogOut,
   NotebookPen,
+  Home,
 } from "lucide-react";
+import Notas from "./Notas";
+import Reflexoes from "./Reflexoes";
+import Configuracoes from "./Configuracoes";
 import "./dashboard.css";
 
 function Dashboard() {
   const navigate = useNavigate();
-  const location = useLocation(); 
+  const location = useLocation();
   const [nomeUsuario, setNomeUsuario] = useState("Usuário");
+  const [aba, setAba] = useState("home");
 
   useEffect(() => {
-    // 1. Prioriza o nome passado no estado de navegação (Rápido na 1ª Montagem)
     if (location.state?.primeiroNome) {
       setNomeUsuario(location.state.primeiroNome);
-      return; 
+      return;
     }
 
-    // 2. Tenta ler do localStorage (em caso de atualização manual)
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/");
@@ -32,26 +35,41 @@ function Dashboard() {
     if (usuarioData) {
       try {
         let usuario = JSON.parse(usuarioData);
-
-        // Lógica para lidar com a dupla codificação, se o primeiro parse não for um objeto
-        if (typeof usuario === 'string' && usuario.startsWith('{')) {
+        if (typeof usuario === "string" && usuario.startsWith("{")) {
           usuario = JSON.parse(usuario);
         }
-
         if (usuario.nome) {
-          const primeiroNome = usuario.nome.split(" ")[0];
-          setNomeUsuario(primeiroNome);
+          setNomeUsuario(usuario.nome.split(" ")[0]);
         }
       } catch (error) {
         console.error("Erro ao ler usuário do localStorage:", error);
       }
     }
-  }, [navigate, location.state]); 
+  }, [navigate, location.state]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
     navigate("/");
+  };
+
+  const renderConteudo = () => {
+    if (aba === "notas") return <Notas />;
+    if (aba === "reflexoes") return <Reflexoes />;
+    if (aba === "config") {
+      return (
+        <Configuracoes
+          onProfileUpdate={(nome) => setNomeUsuario(nome.split(" ")[0])}
+        />
+      );
+    }
+    return (
+      <div className="welcome-card">
+        <h1>Bem-vindo(a), {nomeUsuario} 💙</h1>
+        <h2>Seu Diário Pessoal</h2>
+        <p>Use o menu ao lado para gerenciar notas, reflexões e configurações.</p>
+      </div>
+    );
   };
 
   return (
@@ -63,15 +81,31 @@ function Dashboard() {
         </div>
 
         <nav className="menu">
-          <button className="menu-item">
+          <button
+            className={`menu-item ${aba === "home" ? "active" : ""}`}
+            onClick={() => setAba("home")}
+          >
+            <Home size={20} />
+            <span>Início</span>
+          </button>
+          <button
+            className={`menu-item ${aba === "notas" ? "active" : ""}`}
+            onClick={() => setAba("notas")}
+          >
             <BookOpen size={20} />
             <span>Minhas Notas</span>
           </button>
-          <button className="menu-item">
+          <button
+            className={`menu-item ${aba === "reflexoes" ? "active" : ""}`}
+            onClick={() => setAba("reflexoes")}
+          >
             <MessageSquare size={20} />
             <span>Reflexões</span>
           </button>
-          <button className="menu-item">
+          <button
+            className={`menu-item ${aba === "config" ? "active" : ""}`}
+            onClick={() => setAba("config")}
+          >
             <Settings size={20} />
             <span>Configurações</span>
           </button>
@@ -83,17 +117,11 @@ function Dashboard() {
         </button>
       </aside>
 
-      <main className="main-content">
-        <div className="welcome-card">
-          <h1>Bem-vindo(a), {nomeUsuario} 💙</h1>
-          <h2>Seu Diário Pessoal</h2>
-          <p>Aqui você pode gerenciar suas anotações e pensamentos!</p>
-        </div>
+      <main className={`main-content ${aba !== "home" ? "main-content-fill" : ""}`}>
+        {renderConteudo()}
       </main>
     </div>
   );
 }
 
 export default Dashboard;
-
-
